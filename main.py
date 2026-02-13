@@ -1,6 +1,33 @@
 from tkinter import *
 import json
+from tkinter import messagebox
+import  random
+import pyperclip
 # ---------------------------- PASSWORD GENERATOR ------------------------------- #
+def generate_password():
+    letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
+               'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R',
+               'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+    numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+    symbols = ['!', '#', '$', '%', '&', '(', ')', '*', '+']
+
+    nr_letters = random.randint(8, 10)
+    nr_symbols = random.randint(2, 4)
+    nr_numbers = random.randint(2, 4)
+
+    letters_part = [random.choice(letters) for _ in range(nr_letters)]
+    symbols_part = [random.choice(symbols) for _ in range(nr_symbols)]
+    numbers_part = [random.choice(numbers) for _ in range(nr_numbers)]
+
+    password_list = letters_part + symbols_part + numbers_part
+
+    random.shuffle(password_list)
+
+    password = "".join(password_list)
+
+    password_entry.delete(0, END)
+    password_entry.insert(0, password)
+    pyperclip.copy(password)
 
 # ---------------------------- SAVE PASSWORD ------------------------------- #
 def add_clicked():
@@ -9,27 +36,31 @@ def add_clicked():
     password = password_entry.get()
 
     if len(website) == 0 or len(password) == 0:
-        print("Please don't leave any fields empty!")
+        messagebox.showinfo(title='Error', message="Please don't leave any fields empty!")
     else:
-        new_data = {
-            website: {
-                "email": email,
-                "password": password,
+        is_ok = messagebox.askokcancel(title=website, message=f"These are the details entered: \nEmail: {email} \nPassword: {password} \n"
+                                                      f"Is it ok to save?")
+        if is_ok:
+            new_data = {
+                website: {
+                    "email": email,
+                    "password": password,
+                }
             }
-        }
 
-        try:
-            with open("data.json", "r") as data_file:
-                data = json.load(data_file)
-        except FileNotFoundError:
-            data = {}
-        data.update(new_data)
+            try:
+                with open("data.json", "r") as data_file:
+                    data = json.load(data_file)
+            except FileNotFoundError:
+                data = {}
 
-        with open("data.json", "w") as data_file:
-            json.dump(data, data_file, indent=4)
+            data.update(new_data)
 
-        website_entry.delete(0, END)
-        password_entry.delete(0, END)
+            with open("data.json", "w") as data_file:
+                json.dump(data, data_file, indent=4)
+
+            website_entry.delete(0, END)
+            password_entry.delete(0, END)
 
 # ---------------------------- UI SETUP ------------------------------- #
 window = Tk()
@@ -61,7 +92,7 @@ email_entry.insert(END, "example@gmail.com")
 password_entry = Entry(width=21)
 password_entry.grid(column=1, row=3, sticky="EW")
 
-password_button = Button(text='Generate Password')
+password_button = Button(text='Generate Password', command=generate_password)
 password_button.grid(column=2, row=3, sticky="EW")
 
 add_button = Button(text='Add', width=36, command=add_clicked)
