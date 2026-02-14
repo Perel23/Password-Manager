@@ -3,6 +3,12 @@ import json
 from tkinter import messagebox
 import  random
 import pyperclip
+
+def load_from_data_file():
+    with open("data.json", "r") as data_file:
+        data = json.load(data_file)
+        return data
+
 # ---------------------------- PASSWORD GENERATOR ------------------------------- #
 def generate_password():
     letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
@@ -29,6 +35,7 @@ def generate_password():
     password_entry.insert(0, password)
     pyperclip.copy(password)
 
+
 # ---------------------------- SAVE PASSWORD ------------------------------- #
 def add_clicked():
     website = website_entry.get()
@@ -38,29 +45,48 @@ def add_clicked():
     if len(website) == 0 or len(password) == 0:
         messagebox.showinfo(title='Error', message="Please don't leave any fields empty!")
     else:
-        is_ok = messagebox.askokcancel(title=website, message=f"These are the details entered: \nEmail: {email} \nPassword: {password} \n"
-                                                      f"Is it ok to save?")
-        if is_ok:
-            new_data = {
-                website: {
-                    "email": email,
-                    "password": password,
-                }
+        new_data = {
+            website: {
+                "email": email,
+                "password": password,
             }
+        }
 
-            try:
-                with open("data.json", "r") as data_file:
-                    data = json.load(data_file)
-            except FileNotFoundError:
-                data = {}
+        try:
+           data = load_from_data_file()
+        except FileNotFoundError:
+            data = {}
 
-            data.update(new_data)
+        data.update(new_data)
 
-            with open("data.json", "w") as data_file:
-                json.dump(data, data_file, indent=4)
+        with open("data.json", "w") as data_file:
+            json.dump(data, data_file, indent=4)
 
-            website_entry.delete(0, END)
-            password_entry.delete(0, END)
+        website_entry.delete(0, END)
+        password_entry.delete(0, END)
+
+        saved_label = Label(text="Saved!", fg="green")
+        saved_label.grid(column=1, row=5)
+        window.after(2000, saved_label.destroy)
+
+# ------------------------ SEARCH PASSWORD ---------------------------- #
+def search_password():
+    website = website_entry.get()
+
+    if len(website) == 0:
+        messagebox.showinfo(title='Error', message='Please fill in a website')
+    else:
+        try:
+            data = load_from_data_file()
+            if website in data:
+                email = data[website]["email"]
+                password = data[website]["password"]
+                messagebox.showinfo(title=website, message=f"Email: {email}\nPassword: {password}")
+            else:
+                messagebox.showinfo(title="Error", message=f"No details for {website} exist.")
+        except FileNotFoundError:
+            messagebox.showinfo(title='Error', message='There are no passwords saved')
+
 
 # ---------------------------- UI SETUP ------------------------------- #
 window = Tk()
@@ -97,5 +123,9 @@ password_button.grid(column=2, row=3, sticky="EW")
 
 add_button = Button(text='Add', width=36, command=add_clicked)
 add_button.grid(column=1, row=4, columnspan=2, sticky="EW")
+
+search_button = Button(text='Search', command=search_password)
+search_button.grid(column=2, row=1, sticky="EW")
+
 
 window.mainloop()
